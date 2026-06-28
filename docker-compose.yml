@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongo:27017/rahisisha
+      - REDIS_URL=redis://redis:6379
+    env_file:
+      - .env
+    depends_on:
+      - mongo
+      - redis
+    restart: unless-stopped
+    networks:
+      - rahisisha-network
+
+  mongo:
+    image: mongo:6
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+    networks:
+      - rahisisha-network
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - rahisisha-network
+
+  cron:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: node dist/cron/subscription-cron.js
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongo:27017/rahisisha
+      - REDIS_URL=redis://redis:6379
+    env_file:
+      - .env
+    depends_on:
+      - mongo
+      - redis
+    restart: unless-stopped
+    networks:
+      - rahisisha-network
+
+volumes:
+  mongo_data:
+  redis_data:
+
+networks:
+  rahisisha-network:
+    driver: bridge
