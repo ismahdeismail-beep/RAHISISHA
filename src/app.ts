@@ -60,6 +60,14 @@ app.use(compression());
 app.use(morgan('combined', { stream: { write: (message: string) => logger.info(message.trim()) } }));
 app.use(express.static(path.join(process.cwd(), 'public')));
 
+// Admin dashboard SPA fallback — serve index.html for any /admin/* route not matched by static files
+const adminIndex = path.join(process.cwd(), 'public', 'admin', 'index.html');
+app.get('/admin/*', (req: Request, res: Response) => {
+  res.sendFile(adminIndex, (err) => {
+    if (err) res.status(404).json({ success: false, error: 'Admin dashboard not built yet' });
+  });
+});
+
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'healthy',
