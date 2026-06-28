@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
 const recentTx = [
@@ -6,147 +7,119 @@ const recentTx = [
   { id:'#TXN-8830', to:'Nile Tech Distributors',     amount:'-$4,592',  type:'out', status:'completed', time:'14 min ago',provider:'Braintree' },
   { id:'#TXN-8829', to:'Savannah Boutique',          amount:'+$215.50', type:'in',  status:'pending',   time:'19 min ago',provider:'PesaPal' },
   { id:'#TXN-8828', to:'Serengeti Safari Lodge',     amount:'+$8,200',  type:'in',  status:'completed', time:'27 min ago',provider:'M-Pesa' },
-  { id:'#TXN-8827', to:'Pwani Fresh Produce',        amount:'-$560.00', type:'out', status:'failed',    time:'35 min ago',provider:'Braintree' },
 ];
 
-function StatusBadge({ status }) {
-  return (
-    <span className={`status ${status}`}>
-      <span className="dot" /> {status.charAt(0).toUpperCase() + status.slice(1)}
-    </span>
-  );
+function StatusBadge({ s }) {
+  return <span className={`status ${s}`}><span className="dot" />{s.charAt(0).toUpperCase()+s.slice(1)}</span>;
 }
 
 export default function Overview() {
-  const [showBalance, setShowBalance] = useState(true);
+  const navigate = useNavigate();
+  const [showBal, setShowBal] = useState(true);
 
   return (
     <>
-      {/* Balance Card */}
-      <div className="balance-card animate-in">
-        <div className="label">Available Balance</div>
-        <div className="amount">
-          {showBalance ? '$284,750.00' : '••••••'}
-          <button onClick={() => setShowBalance(!showBalance)} style={{
-            background: 'none', border: 'none', color: '#fff', opacity: 0.7,
-            cursor: 'pointer', fontSize: '1rem', marginLeft: 12, verticalAlign: 'middle'
-          }}>
-            {showBalance ? '🙈' : '👁️'}
-          </button>
-        </div>
-        <div className="change">
-          <span>▲ +$12,430 (4.6%)</span> this month
+      {/* ─── Balance Card ─── */}
+      <div className="balance-card anim">
+        <div className="top">
+          <div>
+            <div className="label">Available Balance</div>
+            <div className="amount">
+              {showBal ? '$284,750.00' : '••••••'}
+              <button className="eye-btn" onClick={() => setShowBal(!showBal)} aria-label="Toggle balance">
+                {showBal ? '🙈' : '👁️'}
+              </button>
+            </div>
+            <div className="change"><span>▲ +$12,430 (4.6%)</span> this month</div>
+          </div>
         </div>
         <div className="actions">
-          <button className="btn-primary">💸 Send Money</button>
-          <button className="btn-secondary">📥 Request</button>
-          <button className="btn-secondary">📄 Statements</button>
+          <button className="btn-p" onClick={() => navigate('/send')}>💸 Send</button>
+          <button className="btn-s" onClick={() => navigate('/send')}>📥 Request</button>
+          <button className="btn-s">📄 Statement</button>
         </div>
       </div>
 
-      {/* Quick Stats */}
+      {/* ─── Stats ─── */}
       <div className="stats-row">
         {[
-          { icon: '💳', value: '1,247', label: 'Transactions (30d)' },
-          { icon: '📈', value: '$342K', label: 'Total Received' },
-          { icon: '💼', value: '12',    label: 'Active Payment Links' },
-          { icon: '⭐', value: '4.9',   label: 'Avg. Rating' },
-        ].map((s, i) => (
-          <div key={i} className="stat-box animate-in">
-            <div className="top">
-              <span className="icon">{s.icon}</span>
-              <span style={{ color: 'var(--success)', fontSize: '0.75rem', fontWeight: 600 }}>↑</span>
-            </div>
-            <div className="value">{s.value}</div>
+          { icon:'💳', val:'1,247', label:'Transactions (30d)' },
+          { icon:'📈', val:'$342K', label:'Total Received' },
+          { icon:'🔗', val:'12',    label:'Active Links' },
+          { icon:'⭐', val:'4.9',   label:'Rating' },
+        ].map((s,i) => (
+          <div key={i} className={`stat-box anim anim-${i+1}`}>
+            <span className="icon">{s.icon}</span>
+            <div className="value">{s.val}</div>
             <div className="label">{s.label}</div>
           </div>
         ))}
       </div>
 
-      {/* Two-column layout */}
+      {/* ─── Recent Activity + Spending ─── */}
       <div className="grid-2">
-        {/* Recent Transactions */}
+        {/* Recent */}
         <div className="card">
           <div className="card-header">
             <h3>Recent Activity</h3>
-            <span className="action">View All →</span>
+            <a className="action" onClick={() => navigate('/transactions')} style={{ cursor:'pointer' }}>View All →</a>
           </div>
-          <div className="card-body" style={{ padding: 0 }}>
+          <div className="card-body" style={{ padding:0 }}>
             <div className="table-wrap">
               <table>
                 <thead>
-                  <tr>
-                    <th>Transaction</th>
-                    <th>Counterparty</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                  </tr>
+                  <tr><th>ID</th><th>Counterparty</th><th>Amount</th><th>Status</th></tr>
                 </thead>
                 <tbody>
                   {recentTx.map(tx => (
-                    <tr key={tx.id}>
-                      <td style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>{tx.id}</td>
-                      <td style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis' }}>{tx.to}</td>
-                      <td style={{
-                        fontWeight: 600,
-                        color: tx.type === 'in' ? 'var(--success)' : tx.status === 'failed' ? 'var(--danger)' : 'var(--text)'
-                      }}>
-                        {tx.amount}
-                      </td>
-                      <td><StatusBadge status={tx.status} /></td>
+                    <tr key={tx.id} style={{ cursor:'pointer' }} onClick={() => navigate('/transactions')}>
+                      <td style={{ fontSize:'0.75rem', color:'var(--text-dim)' }}>{tx.id}</td>
+                      <td style={{ maxWidth:130, overflow:'hidden', textOverflow:'ellipsis' }}>{tx.to}</td>
+                      <td style={{ fontWeight:600, color: tx.type==='in'?'var(--success)':'var(--text)' }}>{tx.amount}</td>
+                      <td><StatusBadge s={tx.status} /></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </div>
-          <div className="card-footer">
-            🔄 Auto-updates every 30 seconds
-          </div>
         </div>
 
-        {/* Quick Actions / Spending */}
+        {/* Spending */}
         <div className="card">
           <div className="card-header">
             <h3>Spending by Provider</h3>
-            <span className="action">Details →</span>
+            <a className="action" onClick={() => navigate('/transactions')} style={{ cursor:'pointer' }}>Details →</a>
           </div>
           <div className="card-body">
             {[
-              { provider: 'M-Pesa',   pct: 58, color: '#0D9488', amount: '$198K' },
-              { provider: 'Braintree',pct: 25, color: '#D4A843', amount: '$85K' },
-              { provider: 'PesaPal',  pct: 17, color: '#4C2A9E', amount: '$58K' },
+              { name:'M-Pesa',   pct:58, color:'#0D9488', val:'$198K' },
+              { name:'Braintree',pct:25, color:'#D4A843', val:'$85K' },
+              { name:'PesaPal',  pct:17, color:'#4C2A9E', val:'$58K' },
             ].map(p => (
-              <div key={p.provider} style={{ marginBottom: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: 6 }}>
-                  <span style={{ fontWeight: 600 }}>{p.provider}</span>
-                  <span style={{ color: 'var(--text-muted)' }}>{p.amount} ({p.pct}%)</span>
+              <div key={p.name} className="prov-bar">
+                <div className="row">
+                  <span>{p.name}</span>
+                  <span>{p.val} ({p.pct}%)</span>
                 </div>
-                <div style={{ height: 8, background: 'var(--bg-primary)', borderRadius: 4, overflow: 'hidden' }}>
-                  <div style={{ width: `${p.pct}%`, height: '100%', background: p.color, borderRadius: 4, transition: 'width 0.6s ease' }} />
-                </div>
+                <div className="track"><div className="fill" style={{ width:`${p.pct}%`, background:p.color }} /></div>
               </div>
             ))}
-
-            <div style={{ marginTop: 20, padding: 14, background: 'var(--teal-bg)', borderRadius: 'var(--radius-sm)' }}>
-              <div style={{ fontSize: '0.82rem', color: 'var(--teal)', fontWeight: 600, marginBottom: 4 }}>
-                💡 Tip
-              </div>
-              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                Using M-Pesa Paybill saves you 1.2% in processing fees compared to card payments.
-              </div>
+            <div className="tip-box">
+              <div className="head">💡 Tip</div>
+              <div className="body">M-Pesa Paybill saves 1.2% vs card payments.</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Payment Links Quick View */}
+      {/* ─── Payment Links ─── */}
       <div className="card">
         <div className="card-header">
           <h3>Active Payment Links</h3>
-          <span className="action">+ New Link</span>
+          <a className="action" onClick={() => navigate('/payment-links')} style={{ cursor:'pointer' }}>+ New Link</a>
         </div>
-        <div className="card-body" style={{ padding: 0 }}>
+        <div className="card-body" style={{ padding:0 }}>
           <div className="table-wrap">
             <table>
               <thead>
@@ -154,17 +127,17 @@ export default function Overview() {
               </thead>
               <tbody>
                 {[
-                  { name:'Invoice #042 — Web Dev',       amount:'$4,200',  status:'active',   created:'2 days ago',   payments:1 },
-                  { name:'Consulting Retainer — June',   amount:'$2,500',  status:'active',   created:'1 week ago',  payments:3 },
-                  { name:'Product Order — Aroma Coffee', amount:'$890',    status:'paid',     created:'2 weeks ago',  payments:1 },
-                  { name:'Donation — Wildlife Fund',     amount:'Any',     status:'active',   created:'1 month ago',  payments:24 },
-                ].map((l, i) => (
-                  <tr key={i}>
-                    <td style={{ fontWeight: 500 }}>{l.name}</td>
-                    <td style={{ fontWeight: 600 }}>{l.amount}</td>
-                    <td><span className={`status ${l.status === 'paid' ? 'completed' : 'pending'}`}><span className="dot" />{l.status.charAt(0).toUpperCase() + l.status.slice(1)}</span></td>
-                    <td style={{ color: 'var(--text-dim)' }}>{l.created}</td>
-                    <td style={{ fontWeight: 600 }}>{l.payments}</td>
+                  { name:'Invoice #042 — Web Dev',      amt:'$4,200',  st:'active', created:'2 days ago',  pay:1 },
+                  { name:'Consulting Retainer — June',  amt:'$2,500',  st:'active', created:'1 week ago',  pay:3 },
+                  { name:'Product Order — Aroma Coffee',amt:'$890',    st:'active', created:'2 weeks ago', pay:1 },
+                  { name:'Donation — Wildlife Fund',    amt:'Any',     st:'active', created:'1 month ago', pay:24 },
+                ].map((l,i) => (
+                  <tr key={i} style={{ cursor:'pointer' }} onClick={() => navigate('/payment-links')}>
+                    <td style={{ fontWeight:500 }}>{l.name}</td>
+                    <td style={{ fontWeight:600 }}>{l.amt}</td>
+                    <td><span className={`status ${l.st}`}><span className="dot" />{l.st.charAt(0).toUpperCase()+l.st.slice(1)}</span></td>
+                    <td style={{ color:'var(--text-dim)', fontSize:'0.78rem' }}>{l.created}</td>
+                    <td style={{ fontWeight:600 }}>{l.pay}</td>
                   </tr>
                 ))}
               </tbody>

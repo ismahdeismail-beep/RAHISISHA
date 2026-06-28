@@ -1,136 +1,104 @@
 import { useState } from 'react';
 
 const allTx = [
-  { id:'#TXN-8832', counterparty:'Aroma Coffee Supplies',   amount:'+$342.00',  type:'in',  provider:'M-Pesa',   status:'completed', date:'Jun 28, 09:42', method:'Paybill' },
-  { id:'#TXN-8831', counterparty:'Safari Mart Wholesale',    amount:'+$1,280',   type:'in',  provider:'M-Pesa',   status:'completed', date:'Jun 28, 09:36', method:'Send Money' },
-  { id:'#TXN-8830', counterparty:'Nile Tech Distributors',   amount:'-$4,592',   type:'out', provider:'Braintree',status:'completed', date:'Jun 28, 09:30', method:'Card' },
-  { id:'#TXN-8829', counterparty:'Savannah Boutique',        amount:'+$215.50',  type:'in',  provider:'PesaPal',  status:'pending',   date:'Jun 28, 09:25', method:'Mobile Money' },
-  { id:'#TXN-8828', counterparty:'Serengeti Safari Lodge',   amount:'+$8,200',   type:'in',  provider:'M-Pesa',   status:'completed', date:'Jun 28, 09:17', method:'Paybill' },
-  { id:'#TXN-8827', counterparty:'Pwani Fresh Produce',      amount:'-$560.00',  type:'out', provider:'Braintree',status:'failed',    date:'Jun 28, 09:09', method:'Card' },
-  { id:'#TXN-8826', counterparty:'Equity Bank Kenya',        amount:'+$12,500',  type:'in',  provider:'M-Pesa',   status:'completed', date:'Jun 28, 08:55', method:'Send Money' },
-  { id:'#TXN-8825', counterparty:'Mama Mboga Grocers',       amount:'+$89.99',   type:'in',  provider:'M-Pesa',   status:'completed', date:'Jun 28, 08:42', method:'Till Number' },
-  { id:'#TXN-8824', counterparty:'KCB Group',                amount:'+$25,000',  type:'in',  provider:'Braintree',status:'pending',   date:'Jun 28, 08:30', method:'Wire Transfer' },
-  { id:'#TXN-8823', counterparty:'Jambo Jet Airways',        amount:'-$3,450',   type:'out', provider:'PesaPal',  status:'completed', date:'Jun 28, 08:18', method:'Mobile Money' },
-  { id:'#TXN-8822', counterparty:'Java House',               amount:'-$124.00',  type:'out', provider:'M-Pesa',   status:'failed',    date:'Jun 28, 08:05', method:'Till Number' },
-  { id:'#TXN-8821', counterparty:'Safaricom PLC',            amount:'+$50,000',  type:'in',  provider:'M-Pesa',   status:'completed', date:'Jun 28, 07:50', method:'Paybill' },
+  { id:'#TXN-8832', to:'Aroma Coffee Supplies',   amt:'+$342.00',  type:'in',  prov:'M-Pesa',   st:'completed', date:'Jun 28, 09:42', method:'Paybill' },
+  { id:'#TXN-8831', to:'Safari Mart Wholesale',    amt:'+$1,280',   type:'in',  prov:'M-Pesa',   st:'completed', date:'Jun 28, 09:36', method:'Send Money' },
+  { id:'#TXN-8830', to:'Nile Tech Distributors',   amt:'-$4,592',   type:'out', prov:'Braintree',st:'completed', date:'Jun 28, 09:30', method:'Card' },
+  { id:'#TXN-8829', to:'Savannah Boutique',        amt:'+$215.50',  type:'in',  prov:'PesaPal',  st:'pending',   date:'Jun 28, 09:25', method:'Mobile' },
+  { id:'#TXN-8828', to:'Serengeti Safari Lodge',   amt:'+$8,200',   type:'in',  prov:'M-Pesa',   st:'completed', date:'Jun 28, 09:17', method:'Paybill' },
+  { id:'#TXN-8827', to:'Pwani Fresh Produce',      amt:'-$560.00',  type:'out', prov:'Braintree',st:'failed',    date:'Jun 28, 09:09', method:'Card' },
+  { id:'#TXN-8826', to:'Equity Bank Kenya',        amt:'+$12,500',  type:'in',  prov:'M-Pesa',   st:'completed', date:'Jun 28, 08:55', method:'Send Money' },
+  { id:'#TXN-8825', to:'Mama Mboga Grocers',       amt:'+$89.99',   type:'in',  prov:'M-Pesa',   st:'completed', date:'Jun 28, 08:42', method:'Till' },
+  { id:'#TXN-8824', to:'KCB Group',                amt:'+$25,000',  type:'in',  prov:'Braintree',st:'pending',   date:'Jun 28, 08:30', method:'Wire' },
+  { id:'#TXN-8823', to:'Jambo Jet Airways',        amt:'-$3,450',   type:'out', prov:'PesaPal',  st:'completed', date:'Jun 28, 08:18', method:'Mobile' },
+  { id:'#TXN-8822', to:'Java House',               amt:'-$124.00',  type:'out', prov:'M-Pesa',   st:'failed',    date:'Jun 28, 08:05', method:'Till' },
+  { id:'#TXN-8821', to:'Safaricom PLC',            amt:'+$50,000',  type:'in',  prov:'M-Pesa',   st:'completed', date:'Jun 28, 07:50', method:'Paybill' },
 ];
 
-const filters = ['All', 'Completed', 'Pending', 'Failed'];
-const typeFilters = ['All Types', 'Money In', 'Money Out'];
+const filters = ['All','Completed','Pending','Failed'];
+const typeFilters = ['All Types','Money In','Money Out'];
 
-function StatusBadge({ status }) {
-  return (
-    <span className={`status ${status}`}>
-      <span className="dot" />{status.charAt(0).toUpperCase() + status.slice(1)}
-    </span>
-  );
+function Badge({ s }) {
+  return <span className={`status ${s}`}><span className="dot" />{s.charAt(0).toUpperCase()+s.slice(1)}</span>;
 }
 
 export default function Transactions() {
-  const [filter, setFilter] = useState('All');
-  const [typeFilter, setTypeFilter] = useState('All Types');
-  const [search, setSearch] = useState('');
+  const [f, setF] = useState('All');
+  const [tf, setTf] = useState('All Types');
+  const [q, setQ] = useState('');
 
   const filtered = allTx.filter(tx => {
-    if (filter !== 'All' && tx.status !== filter.toLowerCase()) return false;
-    if (typeFilter === 'Money In' && tx.type !== 'in') return false;
-    if (typeFilter === 'Money Out' && tx.type !== 'out') return false;
-    if (search && !tx.counterparty.toLowerCase().includes(search.toLowerCase()) && !tx.id.toLowerCase().includes(search.toLowerCase())) return false;
+    if (f !== 'All' && tx.st !== f.toLowerCase()) return false;
+    if (tf === 'Money In' && tx.type !== 'in') return false;
+    if (tf === 'Money Out' && tx.type !== 'out') return false;
+    if (q && !tx.to.toLowerCase().includes(q.toLowerCase()) && !tx.id.toLowerCase().includes(q.toLowerCase())) return false;
     return true;
   });
 
-  const moneyIn = allTx.filter(t => t.type === 'in' && t.status === 'completed').reduce((sum, t) => sum + parseFloat(t.amount.replace(/[^0-9.-]/g,'')), 0);
-  const moneyOut = allTx.filter(t => t.type === 'out' && t.status === 'completed').reduce((sum, t) => sum + Math.abs(parseFloat(t.amount.replace(/[^0-9.-]/g,''))), 0);
+  const moneyIn = allTx.filter(t => t.type==='in' && t.st==='completed').reduce((s,t) => s + Math.abs(parseFloat(t.amt.replace(/[^0-9.-]/g,''))), 0);
+  const moneyOut = allTx.filter(t => t.type==='out' && t.st==='completed').reduce((s,t) => s + Math.abs(parseFloat(t.amt.replace(/[^0-9.-]/g,''))), 0);
 
   return (
     <>
       {/* Summary */}
-      <div className="stats-row" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
-        <div className="stat-box">
-          <div className="value" style={{ color: 'var(--success)' }}>+${moneyIn.toLocaleString()}</div>
-          <div className="label">Money In</div>
-        </div>
-        <div className="stat-box">
-          <div className="value" style={{ color: 'var(--danger)' }}>-${moneyOut.toLocaleString()}</div>
-          <div className="label">Money Out</div>
-        </div>
-        <div className="stat-box">
-          <div className="value">${(moneyIn - moneyOut).toLocaleString()}</div>
-          <div className="label">Net Flow</div>
-        </div>
-        <div className="stat-box">
-          <div className="value">{allTx.length}</div>
-          <div className="label">Total Transactions</div>
-        </div>
+      <div className="stats-row" style={{ gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))' }}>
+        <div className="stat-box"><div className="value" style={{ color:'var(--success)' }}>+${moneyIn.toLocaleString()}</div><div className="label">Received</div></div>
+        <div className="stat-box"><div className="value" style={{ color:'var(--danger)' }}>-${moneyOut.toLocaleString()}</div><div className="label">Sent</div></div>
+        <div className="stat-box"><div className="value">${(moneyIn-moneyOut).toLocaleString()}</div><div className="label">Net</div></div>
+        <div className="stat-box"><div className="value">{allTx.length}</div><div className="label">Total</div></div>
       </div>
 
       {/* Filters */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <div style={{ display:'flex', justifyContent:'space-between', flexWrap:'wrap', gap:10, marginBottom:14 }}>
+        <div style={{ display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
           <div className="filters">
-            {filters.map(f => (
-              <button key={f} className={`filter-btn${filter === f ? ' active' : ''}`} onClick={() => setFilter(f)}>{f}</button>
+            {filters.map(v => (
+              <a key={v} className={`filter-btn${f===v?' active':''}`} onClick={() => setF(v)} style={{ cursor:'pointer' }}>{v}</a>
             ))}
           </div>
-          <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} style={{
-            padding: '6px 12px', borderRadius: 100, border: '1px solid var(--border)',
-            background: 'var(--bg-card)', color: 'var(--text)', fontSize: '0.8rem', outline: 'none'
-          }}>
-            {typeFilters.map(t => <option key={t}>{t}</option>)}
+          <select className="filter-select" value={tf} onChange={e => setTf(e.target.value)}>
+            {typeFilters.map(v => <option key={v}>{v}</option>)}
           </select>
         </div>
-        <div className="header-search" style={{ minWidth: 200 }}>
-          <span>🔍</span>
-          <input type="text" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} />
+        <div className="header-search" style={{ minWidth:180 }}>
+          <span style={{ fontSize:'0.75rem', opacity:0.5 }}>🔍</span>
+          <input type="text" placeholder="Search..." value={q} onChange={e => setQ(e.target.value)} />
         </div>
       </div>
 
       {/* Table */}
       <div className="card">
-        <div className="card-body" style={{ padding: 0 }}>
+        <div className="card-body" style={{ padding:0 }}>
           <div className="table-wrap">
             <table>
               <thead>
-                <tr>
-                  <th style={{ width: 30 }}><input type="checkbox" /></th>
-                  <th>ID</th>
-                  <th>Counterparty</th>
-                  <th>Amount</th>
-                  <th>Provider</th>
-                  <th>Method</th>
-                  <th>Status</th>
-                  <th>Date</th>
-                  <th></th>
-                </tr>
+                <tr><th style={{ width:24 }}><input type="checkbox" /></th><th>ID</th><th>Counterparty</th><th>Amount</th><th>Provider</th><th>Method</th><th>Status</th><th>Date</th></tr>
               </thead>
               <tbody>
                 {filtered.map(tx => (
                   <tr key={tx.id}>
                     <td><input type="checkbox" /></td>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>{tx.id}</td>
-                    <td>{tx.counterparty}</td>
-                    <td style={{ fontWeight: 700, color: tx.type === 'in' ? 'var(--success)' : 'var(--text)' }}>
-                      {tx.amount}
-                    </td>
-                    <td><span style={{ padding: '2px 8px', borderRadius: 4, background: 'var(--bg-primary)', fontSize: '0.8rem' }}>{tx.provider}</span></td>
-                    <td style={{ color: 'var(--text-dim)', fontSize: '0.82rem' }}>{tx.method}</td>
-                    <td><StatusBadge status={tx.status} /></td>
-                    <td style={{ color: 'var(--text-dim)', fontSize: '0.82rem' }}>{tx.date}</td>
-                    <td style={{ cursor: 'pointer', color: 'var(--text-dim)' }}>⋯</td>
+                    <td style={{ fontSize:'0.75rem', color:'var(--text-dim)' }}>{tx.id}</td>
+                    <td>{tx.to}</td>
+                    <td style={{ fontWeight:700, color: tx.type==='in'?'var(--success)':'var(--text)' }}>{tx.amt}</td>
+                    <td><span style={{ padding:'1px 6px', borderRadius:3, background:'var(--bg)', fontSize:'0.75rem' }}>{tx.prov}</span></td>
+                    <td style={{ color:'var(--text-dim)', fontSize:'0.78rem' }}>{tx.method}</td>
+                    <td><Badge s={tx.st} /></td>
+                    <td style={{ color:'var(--text-dim)', fontSize:'0.78rem' }}>{tx.date}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
-        <div className="card-header" style={{ justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '0.82rem', color: 'var(--text-dim)' }}>{filtered.length} of {allTx.length} transactions</span>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="filter-btn">← Prev</button>
-            <button className="filter-btn active">1</button>
-            <button className="filter-btn">2</button>
-            <button className="filter-btn">3</button>
-            <button className="filter-btn">Next →</button>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 18px', borderTop:'1px solid var(--border)' }}>
+          <span style={{ fontSize:'0.75rem', color:'var(--text-dim)' }}>{filtered.length} of {allTx.length}</span>
+          <div className="filters">
+            <a className="filter-btn">←</a>
+            <a className="filter-btn active">1</a>
+            <a className="filter-btn">2</a>
+            <a className="filter-btn">3</a>
+            <a className="filter-btn">→</a>
           </div>
         </div>
       </div>
