@@ -68,6 +68,14 @@ app.get('/admin/*', (req: Request, res: Response) => {
   });
 });
 
+// User dashboard SPA fallback — serve index.html for any /dashboard/* route
+const userIndex = path.join(process.cwd(), 'public', 'dashboard', 'index.html');
+app.get('/dashboard/*', (req: Request, res: Response) => {
+  res.sendFile(userIndex, (err) => {
+    if (err) res.status(404).json({ success: false, error: 'User dashboard not built yet' });
+  });
+});
+
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'healthy',
