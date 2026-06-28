@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 const links = [
   { to: '/overview',      label: 'Overview',        icon: '📊' },
@@ -9,23 +9,19 @@ const links = [
   { to: '/profile',       label: 'Profile',         icon: '👤' },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ user, onLogout }) {
   const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
   const close = () => setOpen(false);
+  const initials = user ? (user.firstName?.[0] || '') + (user.lastName?.[0] || '') : 'U';
 
   return (
     <>
       {open && <div className="mobile-overlay" onClick={close} />}
-
       <aside className={`sidebar${open ? ' open' : ''}`}>
         <div className="sidebar-brand">
           <div className="logo">R</div>
-          <div>
-            <h2><span>RAHI</span>SHISHA</h2>
-          </div>
+          <div><h2><span>RAHI</span>SHISHA</h2></div>
         </div>
-
         <nav className="sidebar-nav">
           <div className="sidebar-label">Menu</div>
           {links.map(l => (
@@ -36,22 +32,20 @@ export default function Sidebar() {
               {l.label}
             </NavLink>
           ))}
-          <div className="sidebar-label" style={{ marginTop: 20 }}>Support</div>
-          <a className="sidebar-link" onClick={() => { close(); navigate('/overview'); /* placeholder */ }} style={{ cursor: 'pointer' }}>
-            <span className="icon">❓</span> Help Center
-          </a>
         </nav>
-
         <div className="sidebar-footer">
-          <div className="avatar">JM</div>
+          <div className="avatar">{initials}</div>
           <div className="info">
-            <div className="name">Jane Mwangi</div>
-            <div className="role">Premium Merchant</div>
+            <div className="name">{user?.firstName || 'User'} {user?.lastName || ''}</div>
+            <div className="role">{user?.role === 'admin' ? 'Administrator' : 'Merchant'}</div>
           </div>
+          <button onClick={onLogout} style={{
+            background:'none', border:'none', color:'var(--text-dim)', cursor:'pointer',
+            fontSize:'0.85rem', padding:'4px', borderRadius:'50%', flexShrink:0
+          }} title="Sign Out">🚪</button>
         </div>
       </aside>
-
-      <button className="mobile-toggle" onClick={() => setOpen(!open)} aria-label="Toggle menu">
+      <button className="mobile-toggle" onClick={() => setOpen(!open)} aria-label="Menu">
         {open ? '✕' : '☰'}
       </button>
     </>

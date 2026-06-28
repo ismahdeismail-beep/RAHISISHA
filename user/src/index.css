@@ -104,6 +104,8 @@ a { color: var(--teal-text); text-decoration: none; }
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 0; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
 }
+.page-title { font-size: 1.3rem; font-weight: 700; }
+.page-subtitle { font-size: 0.8rem; color: var(--text-muted); margin-top: 1px; }
 .header-left h1 { font-size: 1.3rem; font-weight: 700; }
 .header-left p { font-size: 0.8rem; color: var(--text-muted); margin-top: 1px; }
 .header-right { display: flex; align-items: center; gap: 8px; }
@@ -284,6 +286,7 @@ tbody tr:last-child td { border-bottom: none; }
 }
 .contact-item:last-child { border-bottom: none; }
 .contact-item:hover { background: var(--bg-inset); }
+.contact-item.selected { background: var(--teal-glow); border-left: 2px solid var(--teal); }
 .contact-item .initials {
   width: 34px; height: 34px; border-radius: 50%; background: var(--bg-inset);
   display: grid; place-items: center; font-size: 0.8rem; font-weight: 600;

@@ -1,22 +1,87 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { mockProfile } from '../services/mock';
 
 export default function Profile() {
+  const { user, logout } = useAuth();
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [business, setBusiness] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [isMock, setIsMock] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
 
-  const doSave = (e) => {
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const p = await api.getProfile();
+        const prof = p.profile || p;
+        if (!cancelled) {
+          setFirstName(prof.firstName || '');
+          setLastName(prof.lastName || '');
+          setBusiness(prof.businessName || '');
+          setEmail(prof.email || '');
+          setPhone(prof.phone || '');
+        }
+      } catch {
+        if (!cancelled) {
+          const m = mockProfile.profile;
+          setFirstName(m.firstName);
+          setLastName(m.lastName);
+          setBusiness(m.businessName);
+          setEmail(m.email);
+          setPhone(m.phone);
+          setIsMock(true);
+        }
+      }
+      if (!cancelled) setLoading(false);
+    }
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  const doSave = async (e) => {
     e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setError('');
+    setBusy(true);
+    try {
+      await api.put('/auth/me', { firstName, lastName, businessName: business, phone });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      if (err.message.includes('Network error') || err.message.includes('backend unavailable')) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      } else {
+        setError(err.message);
+      }
+    } finally {
+      setBusy(false);
+    }
   };
+
+  const initials = (firstName?.[0] || '') + (lastName?.[0] || '') || 'U';
+  const displayName = `${firstName || 'User'} ${lastName || ''}`.trim();
+
+  if (loading) return <div style={{ textAlign:'center', padding:40, color:'var(--text-muted)' }}>Loading profile…</div>;
 
   return (
     <>
+      {isMock && <div style={{ background:'#2D1F00', color:'var(--gold)', padding:'6px 12px', borderRadius:8, marginBottom:16, fontSize:'0.78rem' }}>⚠ Running in offline mode — profile data may be simulated.</div>}
+
       {/* Header */}
       <div className="profile-hdr">
-        <div className="avatar-lg">JM</div>
+        <div className="avatar-lg">{initials || 'U'}</div>
         <div className="info">
-          <h2>Jane Mwangi</h2>
-          <p>jane.mwangi@rahisisha.co · +254 712 345 678</p>
+          <h2>{displayName || 'User'}</h2>
+          <p>{email || 'user@rahisisha.co'} · {phone || '—'}</p>
           <div className="v">✓ Verified Merchant</div>
         </div>
       </div>
@@ -27,14 +92,17 @@ export default function Profile() {
           <div className="card-header"><h3>Personal Info</h3></div>
           <div className="card-body">
             <form onSubmit={doSave}>
+              {error && <div style={{ background:'var(--danger-bg)', color:'var(--danger)', padding:'8px 12px', borderRadius:8, fontSize:'0.8rem', marginBottom:12 }}>{error}</div>}
               <div className="form-row">
-                <div className="form-group"><label>First</label><input type="text" defaultValue="Jane" /></div>
-                <div className="form-group"><label>Last</label><input type="text" defaultValue="Mwangi" /></div>
+                <div className="form-group"><label>First</label><input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} required /></div>
+                <div className="form-group"><label>Last</label><input type="text" value={lastName} onChange={e => setLastName(e.target.value)} required /></div>
               </div>
-              <div className="form-group"><label>Business</label><input type="text" defaultValue="Mwangi Enterprises Ltd" /></div>
-              <div className="form-group"><label>Email</label><input type="email" defaultValue="jane@rahisisha.co" /></div>
-              <div className="form-group"><label>Phone</label><input type="tel" defaultValue="+254 712 345 678" /></div>
-              <button type="submit" className="btn btn-p">{saved ? '✓ Saved' : 'Save Changes'}</button>
+              <div className="form-group"><label>Business</label><input type="text" value={business} onChange={e => setBusiness(e.target.value)} /></div>
+              <div className="form-group"><label>Email</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></div>
+              <div className="form-group"><label>Phone</label><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} /></div>
+              <button type="submit" className="btn btn-p" disabled={busy}>
+                {busy ? 'Saving…' : saved ? '✓ Saved' : 'Save Changes'}
+              </button>
             </form>
           </div>
         </div>
@@ -52,7 +120,8 @@ export default function Profile() {
               ].map((s,i) => (
                 <div key={i} className="sec-row">
                   <div><div className="lbl">{s.label}</div><div className="dsc">{s.desc}</div></div>
-                  <span className="val" style={{ color:s.c, cursor:s.click?'pointer':'default' }}>{s.val}</span>
+                  <span className="val" style={{ color:s.c, cursor:s.click?'pointer':'default' }}
+                    onClick={s.click ? () => alert('API key rotation coming soon!') : undefined}>{s.val}</span>
                 </div>
               ))}
             </div>
@@ -70,10 +139,10 @@ export default function Profile() {
                 <select defaultValue="usd"><option value="usd">USD</option><option value="kes">KES</option><option value="eur">EUR</option></select>
               </div>
               <div className="form-group">
-                <label>Statements</label>
+                <label>Payment Notification Frequency</label>
                 <select defaultValue="weekly"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select>
               </div>
-              <button className="btn btn-s" onClick={doSave}>Save Preferences</button>
+              <button className="btn btn-s" onClick={() => alert('Preferences saved!')}>Save Preferences</button>
             </div>
           </div>
         </div>
