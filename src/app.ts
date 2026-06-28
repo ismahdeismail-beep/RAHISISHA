@@ -57,6 +57,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(compression());
 app.use(morgan('combined', { stream: { write: (message: string) => logger.info(message.trim()) } }));
+app.use(express.static('public'));
 
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({
