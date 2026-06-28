@@ -93,15 +93,14 @@ async function startServer() {
   try {
     await connectDatabase();
     await connectRedis();
-    app.listen(PORT, () => {
-      logger.info(`RAHISISHA server running on port ${PORT}`);
-      logger.info(`API Documentation: http://localhost:${PORT}/docs`);
-      logger.info(`Health Check: http://localhost:${PORT}/health`);
-    });
   } catch (error) {
-    logger.error('Failed to start server:', error);
-    process.exit(1);
+    logger.warn('Database connections failed, server will start without DB:', error);
   }
+  app.listen(PORT, () => {
+    logger.info(`RAHISISHA server running on port ${PORT}`);
+    logger.info(`API Documentation: http://localhost:${PORT}/docs`);
+    logger.info(`Health Check: http://localhost:${PORT}/health`);
+  });
 }
 
 // Only start the server if this file is run directly (not imported as a module)
