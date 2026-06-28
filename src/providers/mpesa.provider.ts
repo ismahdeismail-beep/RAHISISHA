@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { mpesaConfig } from '../config/mpesa.config';
-import { TransactionRequest, TransactionResult, PaymentProviderError } from '../types';
+import { TransactionRequest, TransactionResult, TransactionStatus, PaymentProviderError } from '../types';
 import { logger } from '../utils/logger';
 
 export class MpesaProvider {
@@ -79,7 +79,7 @@ export class MpesaProvider {
       const response = await axios.post(url, payload, { headers: { Authorization: `Bearer ${token}` }, timeout: 30000 });
       const resultCode = response.data.ResultCode;
       const isSuccess = resultCode === 0 || resultCode === '0';
-      return { success: isSuccess, transactionId: checkoutRequestId, status: isSuccess ? 'completed' : 'failed', provider: 'mpesa', metadata: { resultCode: response.data.ResultCode, resultDesc: response.data.ResultDesc, mpesaReceiptNumber: response.data.CallbackMetadata?.Item?.find((item: any) => item.Name === 'MpesaReceiptNumber')?.Value, transactionDate: response.data.CallbackMetadata?.Item?.find((item: any) => item.Name === 'TransactionDate')?.Value, phoneNumber: response.data.CallbackMetadata?.Item?.find((item: any) => item.Name === 'PhoneNumber')?.Value } };
+      return { success: isSuccess, transactionId: checkoutRequestId, status: isSuccess ? 'completed' : 'failed' as TransactionStatus, amount: 0, provider: 'mpesa', createdAt: new Date(), metadata: { resultCode: response.data.ResultCode, resultDesc: response.data.ResultDesc, mpesaReceiptNumber: response.data.CallbackMetadata?.Item?.find((item: any) => item.Name === 'MpesaReceiptNumber')?.Value, transactionDate: response.data.CallbackMetadata?.Item?.find((item: any) => item.Name === 'TransactionDate')?.Value, phoneNumber: response.data.CallbackMetadata?.Item?.find((item: any) => item.Name === 'PhoneNumber')?.Value } };
     } catch (error: any) { logger.error('M-Pesa status check error:', error.response?.data || error.message); throw new PaymentProviderError('M-Pesa status check failed', error, 500); }
   }
 
@@ -96,7 +96,7 @@ export class MpesaProvider {
         Remarks: 'Transaction reversal', Occasion: 'Refund',
       };
       const response = await axios.post(url, payload, { headers: { Authorization: `Bearer ${token}` }, timeout: 30000 });
-      return { success: response.data.ResponseCode === '0', transactionId: response.data.ConversationID, status: 'pending', provider: 'mpesa', metadata: { responseCode: response.data.ResponseCode, responseDescription: response.data.ResponseDescription } };
+      return { success: response.data.ResponseCode === '0', transactionId: response.data.ConversationID, status: 'pending' as TransactionStatus, amount: Math.ceil(amount), provider: 'mpesa', createdAt: new Date(), metadata: { responseCode: response.data.ResponseCode, responseDescription: response.data.ResponseDescription } };
     } catch (error: any) { logger.error('M-Pesa reversal error:', error.response?.data || error.message); throw new PaymentProviderError('M-Pesa reversal failed', error, 500); }
   }
 

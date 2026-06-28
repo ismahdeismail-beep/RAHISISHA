@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { TransactionRequest, TransactionResult, PaymentProviderError } from '../types';
+import { TransactionRequest, TransactionResult, TransactionStatus, PaymentProviderError } from '../types';
 import { logger } from '../utils/logger';
 
 interface BankConfig { name: string; baseUrl: string; apiKey: string; apiSecret: string; authType: 'oauth' | 'api_key' | 'basic'; }
@@ -45,7 +45,7 @@ export class BankProvider {
   }
 
   async checkBankTransactionStatus(bankCode: string, transactionId: string): Promise<TransactionResult> {
-    try { const token = await this.getBankToken(bankCode); const bank = this.banks.get(bankCode)!; const response = await axios.get(`${bank.baseUrl}/v1/transfers/${transactionId}/status`, { headers: { Authorization: `Bearer ${token}` }, timeout: 10000 }); const statusMap: { [key: string]: string } = { 'PENDING': 'pending', 'PROCESSING': 'pending', 'COMPLETED': 'completed', 'FAILED': 'failed', 'REVERSED': 'refunded' }; return { success: response.data.status === 'COMPLETED', transactionId, status: statusMap[response.data.status] || 'unknown', provider: 'bank', metadata: { bankStatus: response.data.status, settlementDate: response.data.settlementDate, failureReason: response.data.failureReason, bankCode, bankName: bank.name }, createdAt: new Date() }; }
+    try { const token = await this.getBankToken(bankCode); const bank = this.banks.get(bankCode)!; const response = await axios.get(`${bank.baseUrl}/v1/transfers/${transactionId}/status`, { headers: { Authorization: `Bearer ${token}` }, timeout: 10000 }); const statusMap: { [key: string]: TransactionStatus } = { 'PENDING': 'pending', 'PROCESSING': 'pending', 'COMPLETED': 'completed', 'FAILED': 'failed', 'REVERSED': 'refunded' }; return { success: response.data.status === 'COMPLETED', transactionId, status: statusMap[response.data.status] || 'unknown' as TransactionStatus, amount: response.data.amount || 0, provider: 'bank', metadata: { bankStatus: response.data.status, settlementDate: response.data.settlementDate, failureReason: response.data.failureReason, bankCode, bankName: bank.name }, createdAt: new Date() }; }
     catch (error: any) { logger.error('Bank status check error:', error.response?.data || error.message); throw new PaymentProviderError('Bank status check failed', error, 500); }
   }
 

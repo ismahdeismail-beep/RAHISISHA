@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { pesapalConfig } from '../config/pesapal.config';
-import { TransactionRequest, TransactionResult, PaymentProviderError } from '../types';
+import { TransactionRequest, TransactionResult, TransactionStatus, PaymentProviderError } from '../types';
 import { logger } from '../utils/logger';
 
 export class PesapalProvider {
@@ -50,8 +50,8 @@ export class PesapalProvider {
       const isProduction = process.env.NODE_ENV === 'production';
       const url = isProduction ? `${pesapalConfig.production.transactionStatusUrl}?orderTrackingId=${orderTrackingId}` : `${pesapalConfig.sandbox.transactionStatusUrl}?orderTrackingId=${orderTrackingId}`;
       const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` }, timeout: 10000 });
-      const statusMap: { [key: string]: string } = { 'PENDING': 'pending', 'COMPLETED': 'completed', 'FAILED': 'failed', 'INVALID': 'failed', 'REVERSED': 'refunded' };
-      return { success: response.data.payment_status_description === 'COMPLETED', transactionId: orderTrackingId, status: statusMap[response.data.payment_status_description] || 'unknown', provider: 'pesapal', amount: response.data.amount, currency: response.data.currency, metadata: { paymentMethod: response.data.payment_method, confirmationCode: response.data.confirmation_code, paymentStatusDescription: response.data.payment_status_description, description: response.data.description, message: response.data.message, paymentAccount: response.data.payment_account, paymentStatusCode: response.data.payment_status_code } };
+      const statusMap: { [key: string]: TransactionStatus } = { 'PENDING': 'pending', 'COMPLETED': 'completed', 'FAILED': 'failed', 'INVALID': 'failed', 'REVERSED': 'refunded' };
+      return { success: response.data.payment_status_description === 'COMPLETED', transactionId: orderTrackingId, status: statusMap[response.data.payment_status_description] || 'unknown' as TransactionStatus, provider: 'pesapal', amount: response.data.amount, currency: response.data.currency, createdAt: new Date(), metadata: { paymentMethod: response.data.payment_method, confirmationCode: response.data.confirmation_code, paymentStatusDescription: response.data.payment_status_description, description: response.data.description, message: response.data.message, paymentAccount: response.data.payment_account, paymentStatusCode: response.data.payment_status_code } };
     } catch (error: any) { logger.error('PesaPal status check error:', error.response?.data || error.message); throw new PaymentProviderError('PesaPal status check failed', error, 500); }
   }
 
@@ -62,7 +62,7 @@ export class PesapalProvider {
       const url = isProduction ? pesapalConfig.production.refundUrl : pesapalConfig.sandbox.refundUrl;
       const payload = { confirmation_code: orderTrackingId, amount: amount, username: process.env.PESAPAL_USERNAME!, remarks: reason };
       const response = await axios.post(url, payload, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, timeout: 30000 });
-      return { success: response.data.status === '200', transactionId: response.data.refund_id, status: 'pending', provider: 'pesapal', metadata: { refundId: response.data.refund_id, status: response.data.status, message: response.data.message } };
+      return { success: response.data.status === '200', transactionId: response.data.refund_id, status: 'pending' as TransactionStatus, amount, provider: 'pesapal', createdAt: new Date(), metadata: { refundId: response.data.refund_id, status: response.data.status, message: response.data.message } };
     } catch (error: any) { logger.error('PesaPal refund error:', error.response?.data || error.message); throw new PaymentProviderError('PesaPal refund request failed', error, 500); }
   }
 }

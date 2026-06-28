@@ -37,7 +37,7 @@ export class SubscriptionService {
       try {
         let paymentResult;
         if (sub.paymentMethod === 'card') paymentResult = { success: true, autoHandled: true };
-        else if (sub.paymentMethod === 'mpesa') paymentResult = await this.mpesa.initiateStkPush({ phoneNumber: sub.phoneNumber!, amount: sub.amount, orderId: `${sub.subscriptionId}-${Date.now()}`, accountReference: sub.subscriptionId, description: `Subscription payment for ${sub.planId}` });
+        else if (sub.paymentMethod === 'mpesa') paymentResult = await this.mpesa.initiateStkPush({ provider: 'mpesa', paymentMethod: 'stk_push', phoneNumber: sub.phoneNumber!, amount: sub.amount, orderId: `${sub.subscriptionId}-${Date.now()}`, accountReference: sub.subscriptionId, description: `Subscription payment for ${sub.planId}` });
         const plan = await SubscriptionModel.findOne({ planId: sub.planId });
         await SubscriptionModel.updateOne({ subscriptionId: sub.subscriptionId }, { $set: { nextBillingDate: this.calculateNextBillingDate(plan!), lastPaymentDate: new Date(), lastPaymentStatus: paymentResult.success ? 'success' : 'failed' } });
         results.push({ subscriptionId: sub.subscriptionId, success: paymentResult.success });

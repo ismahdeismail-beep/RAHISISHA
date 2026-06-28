@@ -28,7 +28,7 @@ export class AuthController {
       const token = jwt.sign(
         { userId: 'user_id', email },
         process.env.JWT_SECRET!,
-        { expiresIn: process.env.JWT_EXPIRY || '24h' }
+        { expiresIn: (process.env.JWT_EXPIRY || '24h') as any }
       );
 
       successResponse(res, { token });
@@ -44,7 +44,7 @@ export class AuthController {
       const newToken = jwt.sign(
         { userId: decoded.userId, email: decoded.email },
         process.env.JWT_SECRET!,
-        { expiresIn: process.env.JWT_EXPIRY || '24h' }
+        { expiresIn: (process.env.JWT_EXPIRY || '24h') as any }
       );
       successResponse(res, { token: newToken });
     } catch (error) {

@@ -1,6 +1,6 @@
 import braintree from 'braintree';
 import { braintreeGateway } from '../config/braintree.config';
-import { TransactionRequest, TransactionResult, PaymentProviderError } from '../types';
+import { TransactionRequest, TransactionResult, TransactionStatus, PaymentProviderError } from '../types';
 import { logger } from '../utils/logger';
 
 export class BraintreeProvider {
@@ -53,12 +53,12 @@ export class BraintreeProvider {
       }
       const subscriptionResult = await braintreeGateway.subscription.create({ paymentMethodToken, planId, price: customerData.amount?.toString(), options: { startImmediately: true } });
       if (!subscriptionResult.success) throw new PaymentProviderError('Failed to create subscription', subscriptionResult, 400);
-      return { success: true, transactionId: subscriptionResult.subscription.id, providerRef: subscriptionResult.subscription.id, status: subscriptionResult.subscription.status === 'Active' ? 'active' : 'pending', provider: 'braintree', metadata: { nextBillingDate: subscriptionResult.subscription.nextBillingDate, customerId } };
+      return { success: true, transactionId: subscriptionResult.subscription.id, providerRef: subscriptionResult.subscription.id, status: subscriptionResult.subscription.status === 'Active' ? 'active' : 'pending' as TransactionStatus, amount: parseFloat(subscriptionResult.subscription.price || '0'), provider: 'braintree', createdAt: new Date(), metadata: { nextBillingDate: subscriptionResult.subscription.nextBillingDate, customerId } };
     } catch (error: any) { logger.error('Braintree subscription creation error:', error); throw new PaymentProviderError('Subscription creation failed', error, 500, error.code); }
   }
 
   async cancelSubscription(subscriptionId: string): Promise<TransactionResult> {
-    try { const result = await braintreeGateway.subscription.cancel(subscriptionId); if (!result.success) throw new PaymentProviderError('Failed to cancel subscription', result, 400); return { success: true, transactionId: subscriptionId, status: 'cancelled', provider: 'braintree', createdAt: new Date() }; }
+    try { const result = await braintreeGateway.subscription.cancel(subscriptionId); if (!result.success) throw new PaymentProviderError('Failed to cancel subscription', result, 400); return { success: true, transactionId: subscriptionId, status: 'cancelled' as TransactionStatus, amount: 0, provider: 'braintree', createdAt: new Date() }; }
     catch (error: any) { logger.error('Braintree subscription cancellation error:', error); throw new PaymentProviderError('Subscription cancellation failed', error, 500, error.code); }
   }
 

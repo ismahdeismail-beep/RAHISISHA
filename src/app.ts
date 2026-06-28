@@ -20,7 +20,6 @@ import analyticsRoutes from './routes/analytics.routes';
 dotenv.config();
 
 const app: Application = express();
-const PORT = process.env.PORT || 3000;
 
 app.use(helmet({
   contentSecurityPolicy: {
@@ -90,6 +89,7 @@ process.on('SIGTERM', async () => { logger.info('SIGTERM received, shutting down
 process.on('SIGINT', async () => { logger.info('SIGINT received, shutting down gracefully'); process.exit(0); });
 
 async function startServer() {
+  const PORT = process.env.PORT || 3000;
   try {
     await connectDatabase();
     await connectRedis();
@@ -104,5 +104,9 @@ async function startServer() {
   }
 }
 
-startServer();
+// Only start the server if this file is run directly (not imported as a module)
+if (require.main === module) {
+  startServer();
+}
+
 export default app;
