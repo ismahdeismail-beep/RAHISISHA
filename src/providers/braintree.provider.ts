@@ -1,5 +1,5 @@
 import braintree from 'braintree';
-import { braintreeGateway } from '../config/braintree.config';
+import { getBraintreeGateway } from '../config/braintree.config';
 import { TransactionRequest, TransactionResult, TransactionStatus, PaymentProviderError } from '../types';
 import { logger } from '../utils/logger';
 
@@ -7,7 +7,7 @@ export class BraintreeProvider {
   async processCardPayment(request: TransactionRequest): Promise<TransactionResult> {
     try {
       logger.info(`Processing Braintree card payment for order: ${request.orderId}`);
-      const saleResult = await braintreeGateway.transaction.sale({
+      const saleResult = await getBraintreeGateway().transaction.sale({
         amount: request.amount.toString(), paymentMethodNonce: request.paymentNonce,
         options: { submitForSettlement: true, storeInVaultOnSuccess: request.saveCard || false },
         customer: request.customerId ? { id: request.customerId } : undefined,
@@ -44,40 +44,40 @@ export class BraintreeProvider {
       logger.info(`Creating Braintree subscription for plan: ${planId}`);
       let customerId = customerData.id;
       if (!customerId) {
-        const customerResult = await braintreeGateway.customer.create({
+        const customerResult = await getBraintreeGateway().customer.create({
           firstName: customerData.firstName, lastName: customerData.lastName,
           email: customerData.email, phone: customerData.phone, paymentMethodNonce: paymentMethodToken,
         });
         if (!customerResult.success) throw new PaymentProviderError('Failed to create Braintree customer', customerResult, 400);
         customerId = customerResult.customer.id;
       }
-      const subscriptionResult = await braintreeGateway.subscription.create({ paymentMethodToken, planId, price: customerData.amount?.toString(), options: { startImmediately: true } });
+      const subscriptionResult = await getBraintreeGateway().subscription.create({ paymentMethodToken, planId, price: customerData.amount?.toString(), options: { startImmediately: true } });
       if (!subscriptionResult.success) throw new PaymentProviderError('Failed to create subscription', subscriptionResult, 400);
       return { success: true, transactionId: subscriptionResult.subscription.id, providerRef: subscriptionResult.subscription.id, status: subscriptionResult.subscription.status === 'Active' ? 'active' : 'pending' as TransactionStatus, amount: parseFloat(subscriptionResult.subscription.price || '0'), provider: 'braintree', createdAt: new Date(), metadata: { nextBillingDate: subscriptionResult.subscription.nextBillingDate, customerId } };
     } catch (error: any) { logger.error('Braintree subscription creation error:', error); throw new PaymentProviderError('Subscription creation failed', error, 500, error.code); }
   }
 
   async cancelSubscription(subscriptionId: string): Promise<TransactionResult> {
-    try { const result = await braintreeGateway.subscription.cancel(subscriptionId); if (!result.success) throw new PaymentProviderError('Failed to cancel subscription', result, 400); return { success: true, transactionId: subscriptionId, status: 'cancelled' as TransactionStatus, amount: 0, provider: 'braintree', createdAt: new Date() }; }
+    try { const result = await getBraintreeGateway().subscription.cancel(subscriptionId); if (!result.success) throw new PaymentProviderError('Failed to cancel subscription', result, 400); return { success: true, transactionId: subscriptionId, status: 'cancelled' as TransactionStatus, amount: 0, provider: 'braintree', createdAt: new Date() }; }
     catch (error: any) { logger.error('Braintree subscription cancellation error:', error); throw new PaymentProviderError('Subscription cancellation failed', error, 500, error.code); }
   }
 
   async processRefund(transactionId: string, amount?: number): Promise<TransactionResult> {
     try {
       logger.info(`Processing Braintree refund for transaction: ${transactionId}, amount: ${amount}`);
-      const refundResult = amount ? await braintreeGateway.transaction.refund(transactionId, amount.toString()) : await braintreeGateway.transaction.refund(transactionId);
+      const refundResult = amount ? await getBraintreeGateway().transaction.refund(transactionId, amount.toString()) : await getBraintreeGateway().transaction.refund(transactionId);
       if (!refundResult.success) throw new PaymentProviderError('Refund failed', refundResult, 400);
       return { success: true, transactionId: refundResult.transaction.id, providerRef: refundResult.transaction.refundedTransactionId, status: 'refunded', amount: parseFloat(refundResult.transaction.amount), provider: 'braintree', createdAt: new Date(), metadata: { refundedTransactionId: refundResult.transaction.refundedTransactionId } };
     } catch (error: any) { logger.error('Braintree refund error:', error); throw new PaymentProviderError('Refund failed', error, 500, error.code); }
   }
 
   async generateClientToken(customerId?: string): Promise<string> {
-    try { const options: any = {}; if (customerId) options.customerId = customerId; const response = await braintreeGateway.clientToken.generate(options); return response.clientToken; }
+    try { const options: any = {}; if (customerId) options.customerId = customerId; const response = await getBraintreeGateway().clientToken.generate(options); return response.clientToken; }
     catch (error: any) { logger.error('Braintree client token generation error:', error); throw new PaymentProviderError('Failed to generate client token', error, 500, error.code); }
   }
 
   async getTransaction(transactionId: string): Promise<any> {
-    try { return await braintreeGateway.transaction.find(transactionId); }
+    try { return await getBraintreeGateway().transaction.find(transactionId); }
     catch (error: any) { logger.error('Braintree get transaction error:', error); throw new PaymentProviderError('Transaction not found', error, 404, error.code); }
   }
 }
