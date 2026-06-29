@@ -1,5 +1,14 @@
 {
   "version": 2,
   "buildCommand": "npm run build:all",
-  "outputDirectory": "dist"
+  "installCommand": "cd admin && npm install; cd ../user && npm install; cd .. && npm install",
+  "builds": [
+    {
+      "src": "api/index.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "api/index.ts" }
+  ]
 }
